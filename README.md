@@ -4,7 +4,7 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/bandughana/laravel-optimizer.svg?style=flat-square)](https://packagist.org/packages/bandughana/laravel-optimizer)
 ![GitHub Actions](https://github.com/bandughana/laravel-optimizer/actions/workflows/main.yml/badge.svg)
 
-Laravel Optimizer runs a series of optimizations on your [Laravel](https://laravel.com) project. It helps you optimize your web app before/during deployment and make it faster. The package will help you reduce your website images sizes, run the usual [Laravel](laravel.com/docs/8.x/deployment) deployment commands, minify HTML output, and run further optimizations using PHP Opcache.
+Laravel Optimizer runs a series of optimizations on your [Laravel](https://laravel.com) project. It helps you optimize your web app before/during deployment and make it faster. The package will help you reduce your website images sizes, run the usual [Laravel deployment](laravel.com/docs/8.x/deployment) commands, minify HTML output, and run further optimizations using PHP Opcache.
 
 ## Installation
 
