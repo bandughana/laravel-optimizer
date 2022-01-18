@@ -1,0 +1,58 @@
+{
+    "name": "bandughana/laravel-optimizer",
+    "description": "Optimizes your Laravel project and makes it ready for deployment",
+    "keywords": ["cache", "laravel-optimizer", "optimizer", "laravel", "bandughana"],
+    "homepage": "https://github.com/bandughana/laravel-optimizer",
+    "support": {
+        "issues": "https://github.com/bandughana/laravel-optimizer/issues",
+        "source": "https://github.com/bandughana/laravel-optimizer"
+    },
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Alhassan Kamil",
+            "email": "alhassankamil10@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "illuminate/support": "^8.0",
+        "appstract/laravel-opcache": "^4.0",
+        "spatie/laravel-image-optimizer": "^1.7",
+        "renatomarinho/laravel-page-speed": "^2.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^6.0",
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bandughana\\LaravelOptimizer\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bandughana\\LaravelOptimizer\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bandughana\\LaravelOptimizer\\LaravelOptimizerServiceProvider"
+            ],
+            "aliases": {
+                "LaravelOptimizer": "Bandughana\\LaravelOptimizer\\Facades\\LaravelOptimizerFacade"
+            }
+        }
+    }
+}
