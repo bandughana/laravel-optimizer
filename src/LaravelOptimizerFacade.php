@@ -5,7 +5,7 @@ namespace Bandughana\LaravelOptimizer\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Bandughana\LaravelOptimizer\Skeleton\SkeletonClass
+ * @see \Bandughana\LaravelOptimizer\LaravelOptimizer
  */
 class LaravelOptimizerFacade extends Facade
 {
