@@ -1,6 +1,6 @@
 <?php
 
-namespace Bandughana\LaravelOptimizer\Facades;
+namespace Bandughana\LaravelOptimizer;
 
 use Illuminate\Support\Facades\Facade;
 
