@@ -1,7 +1,8 @@
 # Laravel Optimizer
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/bandughana/laravel-optimizer.svg?style=flat-square)](https://packagist.org/packages/bandughana/laravel-optimizer)
-[![Total Downloads](https://img.shields.io/packagist/dt/bandughana/laravel-optimizer.svg?style=flat-square)](https://packagist.org/packages/bandughana/laravel-optimizer)
+[![Latest Version on Packagist](https://img.shields.io/packagist/bandughana/laravel-optimizer.svg?style=for-the-badge)](https://packagist.org/packages/bandughana/laravel-optimizer)
+[![GitHub license](https://img.shields.io/github/license/bandughana/laravel-optimizer?style=for-the-badge)](https://github.com/bandughana/laravel-optimizer/blob/main/LICENSE.md)
+[![Total Downloads](https://img.shields.io/packagist/dt/bandughana/laravel-optimizer.svg?style=for-the-badge)](https://packagist.org/packages/bandughana/laravel-optimizer)
 ![GitHub Actions](https://github.com/bandughana/laravel-optimizer/actions/workflows/main.yml/badge.svg)
 
 Laravel Optimizer runs a series of optimizations on your [Laravel](https://laravel.com) project. It helps you optimize your web app before/during deployment and make it faster. The package will help you reduce your website images sizes, run the usual [Laravel deployment](laravel.com/docs/8.x/deployment) commands, minify HTML output, and run further optimizations using PHP Opcache.
@@ -14,17 +15,17 @@ You can install the package via composer:
 composer require bandughana/laravel-optimizer
 ```
 
-Then, run the following `artisan` command to set up the package and publish configurations:
+Then, run the following Artisan command to set up the package and publish configurations:
 
 ```bash
 php artisan optimize:install
 ```
 
-Behind the scenes, this package uses these awesome packages: [Laravel Opcache](https://github.com/appstract/laravel-opcache), [Laravel Image Optimizer](https://github.com/spatie/laravel-image-optimizer), and [Laravel Page Speed](https://github.com/renatomarinho/laravel-page-speed). Configurations for each of the packages will be published to your project's `config` folder after running the above command. For further configurations, consult the docs for these packages.
+Behind the scenes, this package uses these awesome packages: [Laravel Opcache](https://github.com/appstract/laravel-opcache), [Laravel Image Optimizer](https://github.com/spatie/laravel-image-optimizer), and [Laravel Page Speed](https://github.com/renatomarinho/laravel-page-speed). Configurations for each of the packages will be published to your project's `config` folder after running the above command. For further package-specific configurations, consult the docs for these packages.
 
 ## Usage
 
-In the root of your project, you can run optimizations using the `artisan` command:
+In the root of your project, you can run optimizations using the Artisan command:
 
 ```bash
 php artisan optimize:run

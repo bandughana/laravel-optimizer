@@ -2,8 +2,8 @@
 
 namespace Bandughana\LaravelOptimizer\Console;
 
+use Bandughana\LaravelOptimizer\Facades\LaravelOptimizerFacade as LaravelOptimizer;
 use Illuminate\Console\Command;
-use Bandughana\LaravelOptimizer\LaravelOptimizer;
 
 class Optimize extends Command
 {
@@ -14,14 +14,16 @@ class Optimize extends Command
     public function handle()
     {
         $this->info(__('laravel-optimizer::messages.init_optimizations'));
-        $this->newLine();
 
-        LaravelOptimizer::runOnTerminal($this)
+        LaravelOptimizer::installPackages()
             ->optimizeImages()
+            ->processAssets()
+            ->optimizeComposerAutoloader()
             ->optimizeLaravel()
             ->optimizePhpCode()
             ->cacheViews();
 
+        $this->newLine();
         $this->info(__('laravel-optimizer::messages.done'));
     }
 }

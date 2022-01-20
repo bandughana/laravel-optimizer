@@ -2,9 +2,13 @@
 
 namespace Bandughana\LaravelOptimizer;
 
+use Illuminate\Console\OutputStyle;
 use Illuminate\Support\ServiceProvider;
 use Bandughana\LaravelOptimizer\Console\Install;
+use Symfony\Component\Console\Input\StringInput;
 use Bandughana\LaravelOptimizer\Console\Optimize;
+use Bandughana\LaravelOptimizer\LaravelOptimizer;
+use Symfony\Component\Console\Output\StreamOutput;
 
 class LaravelOptimizerServiceProvider extends ServiceProvider
 {
@@ -40,8 +44,15 @@ class LaravelOptimizerServiceProvider extends ServiceProvider
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'laravel-optimizer');
 
-        $this->app->singleton('laravel-optimizer', function () {
-            return new LaravelOptimizer;
+        $this->app->bind('console-output', function () {
+            return new OutputStyle(
+                new StringInput(''),
+                new StreamOutput(fopen('php://stdout', 'w'))
+            );
+        });
+        
+        $this->app->bind('laravel-optimizer', function () {
+            return new LaravelOptimizer();
         });
     }
 }

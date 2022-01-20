@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'reversible' => true,
+    'reversible' => false,
 
 
     /*
@@ -20,11 +20,11 @@ return [
     | Images Directory
     |--------------------------------------------------------------------------
     |
-    | The directory hosting you project's images. The optimizer will 
-    | optimize any images it finds in this directory. This must be relative 
+    | The directories hosting your project's images. The optimizer will 
+    | optimize any images it finds in these directories. They must be relative 
     | to the storage directory.
     |
     */
 
-    'images_dir' => 'app/public',
+    'images_dirs' => ['app/public'],
 ];

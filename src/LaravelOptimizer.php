@@ -3,137 +3,117 @@
 namespace Bandughana\LaravelOptimizer;
 
 use Illuminate\Support\Facades\File;
-use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Traits\Macroable;
+use Illuminate\Console\Concerns\HasParameters;
 use Appstract\Opcache\OpcacheFacade as OPcache;
 use Illuminate\Console\Concerns\InteractsWithIO;
+use Illuminate\Console\OutputStyle;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class LaravelOptimizer
 {
-    private $interactiveIo;
-    
-    /**
-     * @var string[] The Laravel Page Speed package's middleware
-     */
-    private $pageSpeedMiddleware = [
-    \RenatoMarinho\LaravelPageSpeed\Middleware\InlineCss::class,
-    \RenatoMarinho\LaravelPageSpeed\Middleware\ElideAttributes::class,
-    \RenatoMarinho\LaravelPageSpeed\Middleware\InsertDNSPrefetch::class,
-    \RenatoMarinho\LaravelPageSpeed\Middleware\RemoveComments::class,
-    //\RenatoMarinho\LaravelPageSpeed\Middleware\TrimUrls::class, 
-    \RenatoMarinho\LaravelPageSpeed\Middleware\RemoveQuotes::class,
-    \RenatoMarinho\LaravelPageSpeed\Middleware\CollapseWhitespace::class,
-    \RenatoMarinho\LaravelPageSpeed\Middleware\DeferJavascript::class,
-    ];
-
-    /**
-     * Allows this to run on terminal
-     * @param \Illuminate\Console\Concerns\InteractsWithIO
-     */
-    public static function runOnTerminal(InteractsWithIo $io)
-    {
-        $me = new self;
-        $me::$interactiveIo = $io;
-        return $me;
-    }
-    
-    /**
-     * Registers the Laravel Page Speed middleware
-     * @param \Illuminate\Foundation\Http\Kernel $kernel
-     * @return \Bandughana\LaravelOptimizer\LaravelOptimizer
-     */
-    public function registerMiddleware(Kernel $kernel): static
-    {
-        foreach ($this->pageSpeedMiddleware as $middleware) {
-            $kernel->pushMiddleware($middleware);
-        }
-        return $this;
-    }
+    use InteractsWithIO;
 
     /**
      * Optimizes images using the Laravel Image Optimizer 
      * package
-     * 
-     * @return \Bandughana\LaravelOptimizer\LaravelOptimizer
      */
     public function optimizeImages()
     {
-        $directory = 'app/public';
+        $reversible = false;
 
-        if (self::configFileExists('laravel-optimizer.php')) {
-            $directory = config('laravel-optimizer.images_dir');
+        if ($this->configFileExists('laravel-optimizer.php')) {
+            $reversible = config('laravel-optimizer.reversible');
         }
 
-        $images = File::allFiles(storage_path($directory));
+        $images = $this->getImages();
+
+        if (count($images) === 0) {
+            return;
+        }
+
         $optimizerChain = OptimizerChainFactory::create();
-        if (! is_null($this->interactiveIo)) {
-            $bar = $this->interactiveIo->output->createProgressBar(count($images));
-            $bar->start();
-        }
 
-        self::forwardWithMessage(__('laravel-optimizer::messages.optimizing_imgs'));
-        
+        $this->forwardWithMessage(__('laravel-optimizer::messages.optimizing_imgs'));
+        $progressBar = $this->output->createProgressBar(count($images));
+        $progressBar->setMaxSteps(count($images));
 
         foreach ($images as $image) {
-            $optimizerChain->optimize($image->getPathname());
-            if (!is_null($this->interactiveIo)) {
-                $bar->advance();
+            $imagePath = $image->getPathname();
+
+            if ($reversible) {
+                $optimizerChain->optimize($imagePath. '.old', $imagePath);
+            } else {
+                $optimizerChain->optimize($imagePath);
             }
+
+            $progressBar->advance();
         }
-
-        self::forwardWithMessage('');
-        self::forwardWithMessage(__('done_imgs'));
-
-        if (!is_null($this->interactiveIo)) {
-            $bar->finish();
-        }
-
-        return $this;
+        $progressBar->finish();
     }
 
     /**
      * Optimizes PHP files using the OpCache library
-     * 
-     * @return \Bandughana\LaravelOptimizer\LaravelOptimizer
      */
     public function optimizePhpCode()
     {
-        self::forwardWithMessage(__('laravel-optimizer::messages.caching_php'));
+        $this->forwardWithMessage(__('laravel-optimizer::messages.caching_php'));
         OPcache::compile(true);
-        self::forwardWithMessage(__('laravel-optimizer::messages.done_php'));
+    }
 
-        return $this;
+    /**
+     * Ignores installation of dev packages and optimizes 
+     * the autoloader during autoloader dumps
+     */
+    public function installPackages()
+    {
+        // No need to run if packages already installed
+        if (File::exists(base_path('vendor'))) {
+            return;
+        }
+
+        $this->forwardWithMessage(__('laravel-optimizer::messages.installing_packages'));
+        exec('composer install -o --no-dev');
+    }
+
+    /**
+     * Optimizes composer autoloader for faster file loads
+     */
+    public function optimizeComposerAutoloader()
+    {
+        $this->forwardWithMessage(__('laravel-optimizer::messages.composer_autoload'));
+        exec('composer dumpautoload -o');
+    }
+
+    /**
+     * Process assets for production
+     */
+    public function processAssets()
+    {
+        $this->forwardWithMessage(__('laravel-optimizer::messages.compiling_assets'));
+        exec('npm run production --silent');
     }
 
     /**
      * Runs Laravel built-in optimizations
-     * 
-     * @return \Bandughana\LaravelOptimizer\LaravelOptimizer
      */
     public function optimizeLaravel()
     {
-        self::forwardWithMessage(__('laravel-optimizer::messages.optimizing_laravel'));
-        Artisan::call('optimize --force');
-        Artisan::call('config:cache');
-        Artisan::call('route:cache');
-        self::forwardWithMessage(__('laravel-optimizer::messages.done_laravel'));
-
-        return $this;
+        $this->forwardWithMessage(__('laravel-optimizer::messages.optimizing_laravel'));
+        Artisan::call('optimize -q');
+        Artisan::call('config:cache -q');
+        Artisan::call('route:cache -q');
     }
 
     /**
      * Caches Blade views
-     * 
-     * @return \Bandughana\LaravelOptimizer\LaravelOptimizer
      */
     public function cacheViews()
     {
-        self::forwardWithMessage(__('laravel-optimizer::messages.optimizing_views'));
-        Artisan::call('view:cache');
-        self::forwardWithMessage(__('laravel-optimizer::messages.done_views'));
-
-        return $this;
+        $this->forwardWithMessage(__('laravel-optimizer::messages.optimizing_views'));
+        Artisan::call('view:cache -q');
     }
 
     /**
@@ -142,10 +122,28 @@ class LaravelOptimizer
      */
     public function publishConfigs()
     {
-        Artisan::callSilent('vendor:publish --provider="Appstract\Opcache\OpcacheServiceProvider" --tag="config"');
-        Artisan::callSilent('vendor:publish --provider="Spatie\LaravelImageOptimizer\ImageOptimizerServiceProvider"');
-        Artisan::callSilent('vendor:publish --provider="RenatoMarinho\LaravelPageSpeed\ServiceProvider"');
-        return $this;   
+        $this->forwardWithMessage(__('laravel-optimizer::messages.publishing'));
+
+        Artisan::call('vendor:publish', [
+            '--provider' => 'Appstract\Opcache\OpcacheServiceProvider',
+            '--tag' => 'config',
+            '-q' => true,
+        ]);
+
+        Artisan::call('vendor:publish', [
+            '--provider' => 'Spatie\LaravelImageOptimizer\ImageOptimizerServiceProvider',
+            '-q' => true,
+        ]);
+
+        Artisan::call('vendor:publish', [
+            '--provider' => 'RenatoMarinho\LaravelPageSpeed\ServiceProvider',
+            '-q' => true,
+        ]);
+
+        Artisan::call('vendor:publish', [
+            '--provider' => 'Bandughana\LaravelOptimizer\LaravelOptimizerServiceProvider',
+            '--tag' => 'config'
+        ]);
     }
 
     /**
@@ -153,7 +151,7 @@ class LaravelOptimizer
      * @param string $fileName The config file name to check
      * @return bool
      */
-    public static function configFileExists($fileName)
+    public function configFileExists($fileName)
     {
         return File::exists(config_path($fileName));
     }
@@ -162,14 +160,45 @@ class LaravelOptimizer
      * Print a console message and move forward
      * to a new line
      */
-    private static function forwardWithMessage($message)
+    public function forwardWithMessage(string $message, )
     {
-        if (!is_null(self::$interactiveIo)) {
-            self::$interactiveIo->info($message);
-            self::$interactiveIo->newLine();
-        }
+        $this->output = resolve('console-output');
+        $this->newLine();
+        $this->info($message);
     }
 
+    /**
+     * Looks for all images in the directories 
+     * specified in the config file
+     * 
+     * @return array
+     */
+    public function getImages()
+    {
+        $directories = ['app/public'];
+        $images = [];
+
+        if ($this->configFileExists('laravel-optimizer.php')) {
+            $directories = config('laravel-optimizer.images_dirs');
+        }
+
+        foreach ($directories as $dir) {
+            $dirImages = File::allFiles(storage_path($dir));
+            $images = array_merge($images, $dirImages);
+        }
+        return $images;
+    }
+    /**
+     * Reverses image optimizations
+     */
+    public function reverseImageOptimizations()
+    {
+        
+    }
+
+    /**
+     * Reverses optimizations
+     */
     public function reverseOptimizations()
     {
         Artisan::call('view:clear -q');
@@ -178,6 +207,5 @@ class LaravelOptimizer
         Artisan::call('route:clear -q');
         Artisan::call('cache:clear -q');
         Artisan::call('opcache:clear');
-        return $this;
     }
 }

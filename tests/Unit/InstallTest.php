@@ -5,7 +5,7 @@ namespace Bandughana\LaravelOptimizer\Tests;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 
-class InstallTest extends \Orchestra\Testbench\TestCase {
+class InstallTest extends TestCase {
     /**
      * @test
      */
