@@ -20,7 +20,7 @@ class Optimize extends Command
             ->processAssets()
             ->optimizeComposerAutoloader()
             ->optimizeLaravel()
-            ->optimizePhpCode()
+            // ->optimizePhpCode()
             ->cacheViews();
 
         $this->newLine();

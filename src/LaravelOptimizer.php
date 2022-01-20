@@ -4,13 +4,9 @@ namespace Bandughana\LaravelOptimizer;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Console\Concerns\HasParameters;
 use Appstract\Opcache\OpcacheFacade as OPcache;
 use Illuminate\Console\Concerns\InteractsWithIO;
-use Illuminate\Console\OutputStyle;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
-use Symfony\Component\Console\Helper\ProgressBar;
 
 class LaravelOptimizer
 {
@@ -38,20 +34,23 @@ class LaravelOptimizer
 
         $this->forwardWithMessage(__('laravel-optimizer::messages.optimizing_imgs'));
         $progressBar = $this->output->createProgressBar(count($images));
-        $progressBar->setMaxSteps(count($images));
 
         foreach ($images as $image) {
             $imagePath = $image->getPathname();
+            $oldImagePath = $imagePath . '.lo.old';
+            copy($imagePath, $oldImagePath);
 
             if ($reversible) {
-                $optimizerChain->optimize($imagePath . '.lo.old', $imagePath);
+                $optimizerChain->optimize($oldImagePath, $imagePath);
             } else {
                 $optimizerChain->optimize($imagePath);
             }
 
             $progressBar->advance();
         }
+
         $progressBar->finish();
+        return $this;
     }
 
     /**
@@ -61,6 +60,7 @@ class LaravelOptimizer
     {
         $this->forwardWithMessage(__('laravel-optimizer::messages.caching_php'));
         OPcache::compile(true);
+        return $this;
     }
 
     /**
@@ -71,11 +71,12 @@ class LaravelOptimizer
     {
         // No need to run if packages already installed
         if (File::exists(base_path('vendor'))) {
-            return;
+            return $this;
         }
 
         $this->forwardWithMessage(__('laravel-optimizer::messages.installing_packages'));
         exec('composer install -o --no-dev');
+        return $this;
     }
 
     /**
@@ -84,7 +85,8 @@ class LaravelOptimizer
     public function optimizeComposerAutoloader()
     {
         $this->forwardWithMessage(__('laravel-optimizer::messages.composer_autoload'));
-        exec('composer dumpautoload -o');
+        exec('composer dumpautoload -o -q');
+        return $this;
     }
 
     /**
@@ -93,7 +95,23 @@ class LaravelOptimizer
     public function processAssets()
     {
         $this->forwardWithMessage(__('laravel-optimizer::messages.compiling_assets'));
-        exec('npm run production --silent');
+        $bar = $this->output->createProgressBar();
+        $bar->start();
+
+        $lockFile = base_path('l-o-output.txt');
+        if (file_exists($lockFile)) {
+            return $this;
+        }
+
+        $handler = popen('npm run production', 'r');
+
+        while ($b = fgets($handler, 2048)) {
+            $bar->advance();
+        }
+        pclose($handler); 
+        $bar->finish();
+
+        return $this;
     }
 
     /**
@@ -105,6 +123,7 @@ class LaravelOptimizer
         Artisan::call('optimize -q');
         Artisan::call('config:cache -q');
         Artisan::call('route:cache -q');
+        return $this;
     }
 
     /**
@@ -114,6 +133,7 @@ class LaravelOptimizer
     {
         $this->forwardWithMessage(__('laravel-optimizer::messages.optimizing_views'));
         Artisan::call('view:cache -q');
+        return $this;
     }
 
     /**
@@ -144,6 +164,8 @@ class LaravelOptimizer
             '--provider' => 'Bandughana\LaravelOptimizer\LaravelOptimizerServiceProvider',
             '--tag' => 'config'
         ]);
+
+        return $this;
     }
 
     /**
@@ -182,9 +204,25 @@ class LaravelOptimizer
             $directories = config('laravel-optimizer.images_dirs');
         }
 
+        $acceptedFileExts = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'old'];
         foreach ($directories as $dir) {
-            $dirImages = File::allFiles(storage_path($dir));
+
+            $dirImages = array_filter(
+                File::allFiles(storage_path($dir)),
+                function (
+                    \Symfony\Component\Finder\SplFileInfo $file
+                ) use ($acceptedFileExts) {
+                    return $file->isFile() && in_array(
+                        $file->getExtension(),
+                        $acceptedFileExts
+                    );
+                }
+            );
+
             $images = array_merge($images, $dirImages);
+        }
+        foreach ($images as $image) {
+            $this->forwardWithMessage($image);
         }
         return $images;
     }
@@ -197,20 +235,30 @@ class LaravelOptimizer
     {
         $images = $this->getImages();
         $start = 0;
+        
+        if (count($images) <= 0) {
+            return $this;
+        }
 
         foreach ($images as $image) {
-            if (false !== stripos($image->getFilename(), '.lo.old')) {
+            if (stripos($image->getFilename(), '.lo.old')) {
                 $optimizedImage = substr(
-                    $image->getFilename(),
+                    $image->getRealPath(),
                     $start,
-                    stripos($image->getFilename(), '.lo.old')
+                    stripos($image->getRealPath(), '.lo.old')
                 );
 
-                $this->forwardWithMessage('Reversing ' . $optimizedImage);
+                $this->forwardWithMessage(__(
+                    'laravel-optimizer::messages.reversing_image',
+                    ['image' => $optimizedImage]
+                ));
+
                 unlink($optimizedImage);
-                copy($image->getPathname(), $optimizedImage);
+                copy($image->getRealPath(), $optimizedImage);
+                unlink($image->getRealPath());
             }
         }
+        return $this;
     }
 
     /**
@@ -218,11 +266,13 @@ class LaravelOptimizer
      */
     public function reverseOptimizations()
     {
+        $this->forwardWithMessage(__('laravel-optimizer::messages.reversing_code'));
         Artisan::call('view:clear -q');
         Artisan::call('optimize:clear -q');
         Artisan::call('config:clear -q');
         Artisan::call('route:clear -q');
         Artisan::call('cache:clear -q');
-        Artisan::call('opcache:clear');
+        // Artisan::call('opcache:clear');
+        return $this;
     }
 }

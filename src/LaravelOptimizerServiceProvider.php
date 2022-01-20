@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Bandughana\LaravelOptimizer\Console\Install;
 use Symfony\Component\Console\Input\StringInput;
 use Bandughana\LaravelOptimizer\Console\Optimize;
+use Bandughana\LaravelOptimizer\Console\Reverse;
 use Bandughana\LaravelOptimizer\LaravelOptimizer;
 use Symfony\Component\Console\Output\StreamOutput;
 
@@ -32,6 +33,7 @@ class LaravelOptimizerServiceProvider extends ServiceProvider
             $this->commands([
                 Optimize::class,
                 Install::class,
+                Reverse::class,
             ]);
         }
     }

@@ -3,11 +3,11 @@
 namespace Bandughana\LaravelOptimizer\Console;
 
 use Illuminate\Console\Command;
-use Bandughana\LaravelOptimizer\LaravelOptimizer;
+use Bandughana\LaravelOptimizer\Facades\LaravelOptimizerFacade as LaravelOptimizer;
 
 class Reverse extends Command
 {
-    protected $signature = 'optimizer:revert';
+    protected $signature = 'optimizer:revert {--t|type= : The optimization type to reverse}';
 
     protected $description = 'Reverse optimizations';
 
@@ -15,9 +15,26 @@ class Reverse extends Command
     {
         $this->info(__('laravel-optimizer::messages.init_reverse'));
         $this->newLine();
+        $index = 0;
 
-        LaravelOptimizer::runOnTerminal($this)
-            ->reverseOptimizations();
+        $option = $this->option('type');
+
+        if (!is_null($option)) {
+            $option = $this->choice(
+                'Choose optimizations to reverse:',
+                ['all', 'images', 'code'],
+                $index
+            );
+        }
+
+        if ($option === 'images') {
+            LaravelOptimizer::reverseImageOptimizations();
+        } elseif ($option === 'code') {
+            LaravelOptimizer::reverseOptimizations();
+        } else {
+            LaravelOptimizer::reverseImageOptimizations()
+                ->reverseOptimizations();
+        }
 
         $this->info(__('laravel-optimizer::messages.done_reverse'));
     }
