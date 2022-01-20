@@ -44,7 +44,7 @@ class LaravelOptimizer
             $imagePath = $image->getPathname();
 
             if ($reversible) {
-                $optimizerChain->optimize($imagePath. '.old', $imagePath);
+                $optimizerChain->optimize($imagePath . '.lo.old', $imagePath);
             } else {
                 $optimizerChain->optimize($imagePath);
             }
@@ -160,7 +160,7 @@ class LaravelOptimizer
      * Print a console message and move forward
      * to a new line
      */
-    public function forwardWithMessage(string $message, )
+    public function forwardWithMessage(string $message,)
     {
         $this->output = resolve('console-output');
         $this->newLine();
@@ -171,7 +171,7 @@ class LaravelOptimizer
      * Looks for all images in the directories 
      * specified in the config file
      * 
-     * @return array
+     * @return \Symfony\Component\Finder\SplFileInfo[]
      */
     public function getImages()
     {
@@ -188,12 +188,29 @@ class LaravelOptimizer
         }
         return $images;
     }
+
     /**
      * Reverses image optimizations
+     * TODO add versioned reversals
      */
     public function reverseImageOptimizations()
     {
-        
+        $images = $this->getImages();
+        $start = 0;
+
+        foreach ($images as $image) {
+            if (false !== stripos($image->getFilename(), '.lo.old')) {
+                $optimizedImage = substr(
+                    $image->getFilename(),
+                    $start,
+                    stripos($image->getFilename(), '.lo.old')
+                );
+
+                $this->forwardWithMessage('Reversing ' . $optimizedImage);
+                unlink($optimizedImage);
+                copy($image->getPathname(), $optimizedImage);
+            }
+        }
     }
 
     /**
