@@ -18,7 +18,7 @@ composer require bandughana/laravel-optimizer
 Then, run the following Artisan command to set up the package and publish configurations:
 
 ```bash
-php artisan optimize:install
+php artisan optimizer:install
 ```
 
 Behind the scenes, this package uses these awesome packages: [Laravel Opcache](https://github.com/appstract/laravel-opcache), [Laravel Image Optimizer](https://github.com/spatie/laravel-image-optimizer), and [Laravel Page Speed](https://github.com/renatomarinho/laravel-page-speed). Configurations for each of the packages will be published to your project's `config` folder after running the above command. For further package-specific configurations, consult the docs for these packages.
@@ -28,8 +28,16 @@ Behind the scenes, this package uses these awesome packages: [Laravel Opcache](h
 In the root of your project, you can run optimizations using the Artisan command:
 
 ```bash
-php artisan optimize:run
+php artisan optimizer:run
 ```
+
+If you set `reversible` to `true` in `config/laravel-optimizer.php` before running the above command, you can reverse the optimizations by running the Artisan command below:
+
+```bash
+php artisan optimizer:revert
+```
+
+You can choose to reverse all optimizations, only image optimizations, or only code optimizations by specifying a `--t|type` (`-t` or `--type`) flag with the value of one of the following: [`all`, `images`, `code`]. If you don't provide a value to this option, you'll be promted to choose one.
 
 ### Testing
 

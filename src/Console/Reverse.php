@@ -19,7 +19,7 @@ class Reverse extends Command
 
         $option = $this->option('type');
 
-        if (!is_null($option)) {
+        if (is_null($option)) {
             $option = $this->choice(
                 'Choose optimizations to reverse:',
                 ['all', 'images', 'code'],
