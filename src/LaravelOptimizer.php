@@ -13,7 +13,7 @@ class LaravelOptimizer
     use InteractsWithIO;
 
     /**
-     * Optimizes images using the Laravel Image Optimizer 
+     * Optimizes images using the Laravel Image Optimizer
      * package
      */
     public function optimizeImages()
@@ -27,7 +27,7 @@ class LaravelOptimizer
         $images = $this->getImages();
 
         if (count($images) === 0) {
-            return;
+            return $this;
         }
 
         $optimizerChain = OptimizerChainFactory::create();
@@ -64,7 +64,7 @@ class LaravelOptimizer
     }
 
     /**
-     * Ignores installation of dev packages and optimizes 
+     * Ignores installation of dev packages and optimizes
      * the autoloader during autoloader dumps
      */
     public function installPackages()
@@ -108,7 +108,7 @@ class LaravelOptimizer
         while ($b = fgets($handler, 2048)) {
             $bar->advance();
         }
-        pclose($handler); 
+        pclose($handler);
         $bar->finish();
 
         return $this;
@@ -190,9 +190,9 @@ class LaravelOptimizer
     }
 
     /**
-     * Looks for all images in the directories 
+     * Looks for all images in the directories
      * specified in the config file
-     * 
+     *
      * @return \Symfony\Component\Finder\SplFileInfo[]
      */
     public function getImages()
@@ -229,13 +229,13 @@ class LaravelOptimizer
 
     /**
      * Reverses image optimizations
-     * TODO add versioned reversals
+     * #TODO add versioned reversals
      */
     public function reverseImageOptimizations()
     {
         $images = $this->getImages();
         $start = 0;
-        
+
         if (count($images) <= 0) {
             return $this;
         }
